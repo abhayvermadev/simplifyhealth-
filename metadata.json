@@ -1,6 +1,6 @@
 {
-  "name": "PulseIndia National Health Supply & Surveillance Grid",
-  "description": "Federated AI platform for national-scale health resource and supply chain management across Indian PHC and CHC networks with real-time medicine stock forecasting, bed availability, biometric staff attendance tracking, cross-district redistribution, and outbreak alert coordination.",
+  "name": "Simplify Health",
+  "description": "Federated AI platform for national-scale health resource and supply chain management across primary healthcare networks with real-time medicine stock forecasting, BRICS cross-border privacy-preserving grid, bed & staff triage, redistribution hub, and outbreak surveillance.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

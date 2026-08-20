@@ -42,7 +42,7 @@ export const DelegateBriefingModal: React.FC<DelegateBriefingModalProps> = ({
           </div>
           <div>
             <h2 className="text-lg font-bold text-slate-900">
-              PulseBRICS — International Delegate 5-Minute Executive Briefing
+              Simplify Health — International Delegate 5-Minute Executive Briefing
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
               Evaluation Alignment & Technical Architecture for National Health Ministries

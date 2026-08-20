@@ -16,7 +16,7 @@ import { DelegateBriefingModal } from './components/DelegateBriefingModal';
 
 export default function App() {
   const [selectedCountryId, setSelectedCountryId] = useState<string>('india');
-  const [activeView, setActiveView] = useState<'home' | 'medicines' | 'beds' | 'redistribution' | 'outbreak' | 'brics'>('home');
+  const [activeView, setActiveView] = useState<'home' | 'medicines' | 'brics' | 'beds' | 'redistribution' | 'outbreak'>('home');
 
   // Navigation targets from Search or State Cards
   const [targetStateId, setTargetStateId] = useState<string | undefined>(undefined);
@@ -39,7 +39,7 @@ export default function App() {
     HEALTH_DATA_STORE.find((c) => c.id === selectedCountryId) || HEALTH_DATA_STORE[0];
 
   const handleNavigateFromHome = (
-    view: 'medicines' | 'beds' | 'redistribution' | 'outbreak' | 'brics',
+    view: 'medicines' | 'brics' | 'beds' | 'redistribution' | 'outbreak',
     stateId?: string,
     districtId?: string,
     facilityId?: string
@@ -123,6 +123,10 @@ export default function App() {
           />
         )}
 
+        {activeView === 'brics' && (
+          <BricsCrossBorderView />
+        )}
+
         {activeView === 'beds' && (
           <BedStaffView
             states={currentCountry.states}
@@ -147,16 +151,12 @@ export default function App() {
             states={currentCountry.states}
           />
         )}
-
-        {activeView === 'brics' && (
-          <BricsCrossBorderView />
-        )}
       </main>
 
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white py-4 text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span className="font-semibold text-slate-700">PulseIndia • National Health Mission (NHM) & ABDM Federated AI Grid</span>
+          <span className="font-semibold text-slate-700">Simplify Health • National Health Mission (NHM) & ABDM Federated AI Grid</span>
           <span className="font-mono text-[11px] text-slate-400">Primary Health Centre (PHC) & CHC Observability</span>
         </div>
       </footer>

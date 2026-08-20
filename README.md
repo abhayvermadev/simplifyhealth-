@@ -1,4 +1,4 @@
-# Aurex Health : National Health Supply & Surveillance Grid
+# Simplify Health : National Health Supply & Surveillance Grid
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![React 19](https://img.shields.io/badge/React-19.0-61dafb.svg?logo=react)](https://reactjs.org/)
@@ -8,7 +8,7 @@
 [![Privacy Standard](https://img.shields.io/badge/Privacy-DPDP_2023_|_LGPD_|_POPIA-059669.svg)](https://www.meity.gov.in/)
 [![BRICS Cross-Border](https://img.shields.io/badge/Cross--Border-BRICS_Federated_Grid-4f46e5.svg)](#-brics-cross-border-health-grid--privacy-preserving-ai)
 
-> **Aurex Health** is an enterprise-grade, privacy-preserving digital health intelligence platform engineered for real-time surveillance, demand forecasting, and autonomous resource reallocation across primary healthcare networks (PHCs and CHCs). It combines sovereign edge computing, WHO ATC drug harmonization, and zero-leakage cross-border federated learning across BRICS partner health systems.
+> **Simplify Health** is an enterprise-grade, privacy-preserving digital health intelligence platform engineered for real-time surveillance, demand forecasting, and autonomous resource reallocation across primary healthcare networks (PHCs and CHCs). It combines sovereign edge computing, real-time medicine stock forecasting, bed and biometric staff triage, inter-district redistribution, and zero-leakage cross-border federated learning across BRICS partner health systems.
 
 ---
 
@@ -17,12 +17,12 @@
 1. [Executive Overview](#-executive-overview)
 2. [System Architecture](#-system-architecture)
 3. [Core Capabilities & Modules](#-core-capabilities--modules)
-   - [1. National GIS Telemetry Map](#1-national-gis-telemetry-map-36-states--uts)
-   - [2. Medicine Stock & AI Burn-Rate Forecasting](#2-medicine-stock--ai-burn-rate-forecasting)
-   - [3. Bed Availability & Biometric Staff Roster Triage](#3-bed-availability--biometric-staff-roster-triage)
-   - [4. District-to-District Supply Redistribution Engine](#4-district-to-district-supply-redistribution-engine)
-   - [5. Outbreak Alert & IDSP Early Warning Coordination](#5-outbreak-alert--idsp-early-warning-coordination)
-   - [6. BRICS Cross-Border Health Grid & Privacy-Preserving AI](#6-brics-cross-border-health-grid--privacy-preserving-ai)
+   - [1. National Overview & GIS Telemetry Map](#1-national-overview--gis-telemetry-map)
+   - [2. Medicine Stock & AI Forecast](#2-medicine-stock--ai-forecast)
+   - [3. BRICS Cross-Border Health Grid](#3-brics-cross-border-health-grid)
+   - [4. Bed & Staff Triage](#4-bed--staff-triage)
+   - [5. Redistribution Hub](#5-redistribution-hub)
+   - [6. Outbreak Surveillance](#6-outbreak-surveillance)
 4. [Data Sovereignty & Cryptographic Privacy Architecture](#-data-sovereignty--cryptographic-privacy-architecture)
 5. [Tech Stack](#-tech-stack)
 6. [Repository Structure](#-repository-structure)
@@ -36,13 +36,13 @@
 
 ## 🏛️ Executive Overview
 
-Rural and sub-district healthcare infrastructure frequently suffers from localized medicine stockouts, uncoordinated bed surges, and delayed epidemic detection. **Aurex Health** addresses these challenges by unifying grassroots telemetry from **Primary Health Centres (PHCs)** and **Community Health Centres (CHCs)** into a single, high-resolution command dashboard.
+Rural and sub-district healthcare infrastructure frequently suffers from localized medicine stockouts, uncoordinated bed surges, and delayed epidemic detection. **Simplify Health** addresses these challenges by unifying grassroots telemetry from **Primary Health Centres (PHCs)** and **Community Health Centres (CHCs)** into a single, high-resolution command dashboard.
 
 ### Core Objectives:
 - **Zero Preventable Stockouts**: Continuous calculation of **Days of Supply (DOS)** and AI burn-rate forecasting for Essential Drug List (EDL) pharmaceuticals.
 - **Dynamic Capacity Equalization**: Automated inter-district logistics transfers moving surplus inventory from regional warehouses to deficit rural facilities.
 - **Epidemic Early-Warning Integration**: Real-time correlation of syndromic admissions with seasonal vectors (e.g., Dengue, Malaria, Acute Encephalitis).
-- **BRICS Sovereign Cross-Border Operability**: Demonstration of multi-national health system operability (**India NHM, Brazil SUS, South Africa NHI, China NHC, Russia Minzdrav**) utilizing **Zero-Knowledge proofs** and **Differential Privacy** without transmitting raw citizen records across national borders.
+- **BRICS Sovereign Cross-Border Operability**: Multi-national health system operability (**India NHM, Brazil SUS, South Africa NHI, China NHC, Russia Minzdrav**) utilizing sovereign enclaves and **Differential Privacy** without transmitting raw citizen records across national borders.
 
 ---
 
@@ -61,7 +61,7 @@ Rural and sub-district healthcare infrastructure frequently suffers from localiz
 └──────────────▲──────────────┘└─────────────────────────────┘└─────────────────────────────┘
                │
 ┌──────────────┴───────────────────────────────────────────────────────────────────────────────────┐
-│                                 AUREX HEALTH NATIONAL CONTROLLER                                 │
+│                                SIMPLIFY HEALTH NATIONAL CONTROLLER                               │
 │  ┌────────────────────────────────────────────────────────────────────────────────────────────┐  │
 │  │                            STATE COMMAND & COORDINATION LAYER                              │  │
 │  │   • 36 States & Union Territories (Maharashtra, UP, Bihar, Kerala, Rajasthan, Manipur...)  │  │
@@ -123,16 +123,20 @@ Rural and sub-district healthcare infrastructure frequently suffers from localiz
   - 🇿🇦 **South Africa**: *National Department of Health (NDoH)* & *NHI* (POPIA 2013).
   - 🇨🇳 **China**: *National Health Commission (NHC)* (PIPL 2021).
   - 🇷🇺 **Russia**: *Ministry of Health (Minzdrav)* (Law 152-FZ).
-- **WHO ATC / INN Universal Medicine Harmonization**:
-  - Standardizes local brandings to global classifications (e.g., *Soro Fisiológico 0.9%* ⇄ *Normal Saline 500ml* ⇄ *0.9% 氯化钠注射液* [ATC Code: `B05CB01`]) with $>99\%$ interchangeability ratings.
-- **Zero-Knowledge Humanitarian Aid Corridor**:
-  - Partner nations use **zk-SNARKs** to verify emergency surplus availability during international crises without disclosing strategic national stockpile volumes or depot locations.
+- **Multi-National Sovereign Enclaves**:
+  - 🇮🇳 **India**: *National Health Mission (NHM)* & *ABDM Sandbox* (DPDP Act 2023).
+  - 🇧🇷 **Brazil**: *Sistema Único de Saúde (SUS)* & *DATASUS* (LGPD Art. 11).
+  - 🇿🇦 **South Africa**: *National Department of Health (NDoH)* & *NHI* (POPIA 2013).
+  - 🇨🇳 **China**: *National Health Commission (NHC)* (PIPL 2021).
+  - 🇷🇺 **Russia**: *Ministry of Health (Minzdrav)* (Law 152-FZ).
+- **Privacy-Preserving Federated Intelligence**:
+  - Multi-party computation (SMPC) and Differential Privacy (ε=0.5) to synchronize epidemiological trends across borders without leaking citizen records.
 
 ---
 
 ## 🔒 Data Sovereignty & Cryptographic Privacy Architecture
 
-AUREX HEALTH adheres strictly to an absolute **Zero Raw-Data Sharing Policy**. No patient identifiers (ABHA ID, Aadhaar, CPF, National ID), diagnostic histories, or clinical notes ever cross national boundaries.
+**Simplify Health** adheres strictly to an absolute **Zero Raw-Data Sharing Policy**. No patient identifiers (ABHA ID, Aadhaar, CPF, National ID), diagnostic histories, or clinical notes ever cross national boundaries.
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
@@ -144,9 +148,9 @@ AUREX HEALTH adheres strictly to an absolute **Zero Raw-Data Sharing Policy**. N
 │   2. Secure Multi-Party Computation (SMPC):                                            │
 │      Model weight aggregation executed via homomorphic encryption shards.              │
 │                                                                                        │
-│   3. Zero-Knowledge Range Proofs (zk-SNARKs):                                          │
-│      Attests: Proof(National_Stock - Safety_Reserve > Transfer_Volume) == TRUE          │
-│      Reveals: 0 bytes of underlying depot inventory or military reserve data.          │
+│   3. Sovereign Enclave Boundaries:                                                     │
+│      100% In-Country Isolation (DPDP Act 2023, LGPD, POPIA, PIPL, Law 152-FZ).         │
+│      Reveals: 0 bytes of underlying local health center data across national borders.  │
 └────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -177,24 +181,24 @@ AUREX HEALTH adheres strictly to an absolute **Zero Raw-Data Sharing Policy**. N
 ## 📁 Repository Structure
 
 ```text
-pulseindia-health-grid/
+simplify-health/
 ├── src/
 │   ├── components/
 │   │   ├── NavigationHeader.tsx       # Global brand header, country badge & view switcher
-│   │   ├── OverviewHome.tsx           # Executive national command summary with 5 core feature cards
+│   │   ├── OverviewHome.tsx           # Executive national command summary with core feature cards
 │   │   ├── RealLeafletMap.tsx         # Hardware-accelerated, zero-flicker CartoDB GIS map
-│   │   ├── MedicineStockView.tsx      # Essential Drug List (EDL) tracking & DOS forecasting
+│   │   ├── MedicineStockView.tsx      # Essential Drug List (EDL) tracking & AI forecasting
 │   │   ├── BedStaffView.tsx           # Multi-ward bed triage & biometric attendance telemetry
 │   │   ├── RedistributionView.tsx     # Inter-district supply reallocation & logistics manager
 │   │   ├── OutbreakCoordinationView.tsx# IDSP syndromic outbreak early warning radar
-│   │   ├── BricsCrossBorderView.tsx   # BRICS multi-nation grid, WHO ATC harmonizer & zk-SNARKs
+│   │   ├── BricsCrossBorderView.tsx   # BRICS multi-nation grid & sovereign privacy enclaves
 │   │   ├── DelegateBriefingModal.tsx  # Executive briefing dossier & platform documentation modal
 │   │   ├── FacilityAuditReportModal.tsx# Comprehensive single-facility clinical audit popup
 │   │   ├── StateMap.tsx               # State-level GIS container
 │   │   └── DistrictMap.tsx            # District-level GIS container
 │   ├── data/
 │   │   ├── healthData.ts              # Pan-India telemetry store (36 States & UTs, PHCs/CHCs)
-│   │   └── bricsData.ts               # BRICS nation profiles, WHO ATC drug mappings & federated logs
+│   │   └── bricsData.ts               # BRICS nation profiles & federated logs
 │   ├── types.ts                       # Shared TypeScript schemas, enums, and telemetry interfaces
 │   ├── index.css                      # Tailwind CSS v4 entry point
 │   ├── main.tsx                       # React application root mount
@@ -219,8 +223,8 @@ pulseindia-health-grid/
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-username/pulseindia-health-grid.git
-   cd pulseindia-health-grid
+   git clone https://github.com/your-username/simplify-health.git
+   cd simplify-health
    ```
 
 2. **Install dependencies:**

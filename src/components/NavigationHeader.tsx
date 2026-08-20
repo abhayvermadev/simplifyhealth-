@@ -18,8 +18,8 @@ interface NavigationHeaderProps {
   currentCountry: CountryData;
   allCountries: CountryData[];
   onSelectCountry: (countryId: string) => void;
-  activeView: 'home' | 'medicines' | 'beds' | 'redistribution' | 'outbreak' | 'brics';
-  onNavigateView: (view: 'home' | 'medicines' | 'beds' | 'redistribution' | 'outbreak' | 'brics') => void;
+  activeView: 'home' | 'medicines' | 'brics' | 'beds' | 'redistribution' | 'outbreak';
+  onNavigateView: (view: 'home' | 'medicines' | 'brics' | 'beds' | 'redistribution' | 'outbreak') => void;
   isFederatedSyncing: boolean;
   onTriggerFederatedSync: () => void;
   federatedEpoch: number;
@@ -36,10 +36,10 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
   const navItems = [
     { id: 'home', label: 'National Overview', icon: LayoutDashboard, badge: 'Overview' },
     { id: 'medicines', label: 'Medicine Stock & AI Forecast', icon: Pill, badge: 'Stockouts' },
+    { id: 'brics', label: 'BRICS Cross-Border Grid', icon: Globe, badge: 'Privacy AI' },
     { id: 'beds', label: 'Bed & Staff Triage', icon: BedDouble, badge: 'Rosters' },
     { id: 'redistribution', label: 'Redistribution Hub', icon: Truck, badge: 'Logistics' },
     { id: 'outbreak', label: 'Outbreak Surveillance', icon: Radio, badge: 'Alerts' },
-    { id: 'brics', label: 'BRICS Cross-Border Grid', icon: Globe, badge: 'Privacy AI' },
   ] as const;
 
   return (
@@ -70,7 +70,7 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-extrabold text-lg tracking-tight text-slate-900">
-                    PulseIndia
+                    Simplify Health
                   </span>
                   <span className="text-[11px] uppercase font-extrabold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-300">
                     NHM & ABDM AI GRID
