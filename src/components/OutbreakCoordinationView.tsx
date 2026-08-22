@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { OutbreakAlert, StateData } from '../types';
 import {
   ShieldAlert,
@@ -14,7 +14,12 @@ import {
   Globe,
   Share2,
   Zap,
+  Database,
 } from 'lucide-react';
+import {
+  updateOutbreakActionInFirestore,
+  subscribeToOutbreakProtocols,
+} from '../services/firebaseSyncService';
 
 interface OutbreakCoordinationViewProps {
   initialOutbreaks: OutbreakAlert[];
@@ -30,6 +35,30 @@ export const OutbreakCoordinationView: React.FC<OutbreakCoordinationViewProps> =
     initialOutbreaks[0]?.id || ''
   );
 
+  // Subscribe to real-time outbreak protocol updates from Firestore
+  useEffect(() => {
+    const unsubscribe = subscribeToOutbreakProtocols((dbProtocols) => {
+      if (dbProtocols && Object.keys(dbProtocols).length > 0) {
+        setOutbreaks((prev) =>
+          prev.map((o) => {
+            const dbData = dbProtocols[o.id];
+            if (dbData) {
+              return {
+                ...o,
+                emergencyActionStatus: dbData.emergencyActionStatus || o.emergencyActionStatus,
+              };
+            }
+            return o;
+          })
+        );
+      }
+    });
+
+    return () => {
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
+  }, []);
+
   // Scenario Simulator Form state
   const [customDisease, setCustomDisease] = useState('Monsoon Vector-Borne Spike (Dengue & Chikungunya)');
   const [customState, setCustomState] = useState('Maharashtra');
@@ -43,6 +72,28 @@ export const OutbreakCoordinationView: React.FC<OutbreakCoordinationViewProps> =
   const [commanderResponse, setCommanderResponse] = useState<any>(null);
 
   const selectedAlert = outbreaks.find((o) => o.id === selectedOutbreakId) || outbreaks[0];
+
+  const handleUpdateActionStatus = async (
+    outbreakId: string,
+    status: OutbreakAlert['emergencyActionStatus']
+  ) => {
+    setOutbreaks((prev) =>
+      prev.map((o) => (o.id === outbreakId ? { ...o, emergencyActionStatus: status } : o))
+    );
+    try {
+      const alert = outbreaks.find((o) => o.id === outbreakId);
+      if (alert) {
+        await updateOutbreakActionInFirestore(
+          outbreakId,
+          alert.diseaseName,
+          status,
+          alert.criticalMedicineNeeds
+        );
+      }
+    } catch (e) {
+      console.warn('Status updated locally, Firestore sync pending:', e);
+    }
+  };
 
   const handleRunIncidentSimulation = async () => {
     setIsSimulating(true);
@@ -159,9 +210,23 @@ export const OutbreakCoordinationView: React.FC<OutbreakCoordinationViewProps> =
               </p>
             </div>
 
-            <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-              Protocol: {selectedAlert.emergencyActionStatus.replace('_', ' ')}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-500 font-medium hidden sm:inline">Response Phase:</span>
+              <select
+                value={selectedAlert.emergencyActionStatus}
+                onChange={(e) =>
+                  handleUpdateActionStatus(
+                    selectedAlert.id,
+                    e.target.value as OutbreakAlert['emergencyActionStatus']
+                  )
+                }
+                className="text-xs font-bold px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-300 focus:outline-none cursor-pointer"
+              >
+                <option value="ACTIVE_RESPONSE">ACTIVE RESPONSE</option>
+                <option value="CONTAINMENT_PHASE">CONTAINMENT PHASE</option>
+                <option value="ASSESSMENT_TRIGGERED">ASSESSMENT TRIGGERED</option>
+              </select>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

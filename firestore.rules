@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Test connection document
+    match /test/connection {
+      allow read: if true;
+    }
+
+    // User profiles
+    match /users/{userId} {
+      allow get: if isValidId(userId);
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == userId
+        && incoming().keys().hasAll(['uid', 'email', 'role'])
+        && incoming().uid == request.auth.uid
+        && incoming().email is string && incoming().email.size() <= 200
+        && incoming().role in ['STATE_NODAL_OFFICER', 'DISTRICT_CHIEF_MEDICAL_OFFICER', 'PHC_MEDICAL_OFFICER', 'EPIDEMIOLOGY_DIRECTOR'];
+      allow update: if isSignedIn() && request.auth.uid == userId
+        && incoming().uid == existing().uid
+        && incoming().email == existing().email
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'designatedState', 'lastActive', 'role']);
+    }
+
+    // Inter-district Redistribution Transfers
+    match /transfers/{transferId} {
+      allow get, list: if true;
+      allow create: if isValidId(transferId)
+        && incoming().keys().hasAll([
+          'id', 'sourceDistrictId', 'sourceDistrictName', 'targetDistrictId',
+          'targetDistrictName', 'itemType', 'quantity', 'unit', 'urgency',
+          'transitStatus', 'dispatchedAt'
+        ])
+        && incoming().id == transferId
+        && incoming().sourceDistrictName is string && incoming().sourceDistrictName.size() <= 100
+        && incoming().targetDistrictName is string && incoming().targetDistrictName.size() <= 100
+        && incoming().itemType is string && incoming().itemType.size() <= 150
+        && incoming().quantity is number && incoming().quantity > 0 && incoming().quantity <= 1000000
+        && incoming().unit is string && incoming().unit.size() <= 50
+        && incoming().urgency in ['HIGH', 'EMERGENCY', 'STANDARD']
+        && incoming().transitStatus in ['PENDING', 'DISPATCHED', 'IN_TRANSIT', 'DELIVERED'];
+      allow update: if isValidId(transferId)
+        && incoming().id == existing().id
+        && incoming().sourceDistrictId == existing().sourceDistrictId
+        && incoming().targetDistrictId == existing().targetDistrictId
+        && incoming().diff(existing()).affectedKeys().hasOnly(['transitStatus', 'etaHours', 'rationale', 'quantity', 'vehicleType']);
+      allow delete: if isSignedIn();
+    }
+
+    // Facility Telemetry Overrides (Live stock, beds, oxygen)
+    match /facilityOverrides/{facilityId} {
+      allow get, list: if true;
+      allow create, update: if isValidId(facilityId)
+        && incoming().keys().hasAll(['facilityId', 'updatedAt'])
+        && incoming().facilityId == facilityId
+        && incoming().updatedAt is string && incoming().updatedAt.size() <= 60;
+      allow delete: if isSignedIn();
+    }
+
+    // Outbreak Containment Protocols
+    match /outbreakProtocols/{protocolId} {
+      allow get, list: if true;
+      allow create: if isValidId(protocolId)
+        && incoming().keys().hasAll(['id', 'outbreakId', 'diseaseName', 'emergencyActionStatus', 'updatedAt'])
+        && incoming().id == protocolId
+        && incoming().diseaseName is string && incoming().diseaseName.size() <= 100
+        && incoming().emergencyActionStatus in ['ACTIVE_RESPONSE', 'CONTAINMENT_PHASE', 'ASSESSMENT_TRIGGERED'];
+      allow update: if isValidId(protocolId)
+        && incoming().id == existing().id
+        && incoming().outbreakId == existing().outbreakId
+        && incoming().diff(existing()).affectedKeys().hasOnly(['emergencyActionStatus', 'containmentProtocolsDeployed', 'updatedAt', 'updatedBy']);
+      allow delete: if isSignedIn();
+    }
+  }
+}

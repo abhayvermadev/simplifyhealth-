@@ -3,6 +3,18 @@ import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
+import { requireAuth, optionalAuth, AuthRequest } from './src/middleware/auth.ts';
+import { getOrCreateUser } from './src/db/users.ts';
+import {
+  getAllTransfers,
+  insertTransfer,
+  updateTransferStatus,
+  getFacilityTelemetry,
+  upsertFacilityTelemetry,
+  getOutbreakProtocols,
+  upsertOutbreakProtocol,
+  logAuditEvent,
+} from './src/db/healthRecords.ts';
 
 dotenv.config();
 
@@ -95,6 +107,156 @@ async function startServer() {
   // Health check
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
+  // User Profile synchronization with PostgreSQL
+  app.post('/api/users/sync', optionalAuth, async (req: AuthRequest, res) => {
+    try {
+      const uid = req.user?.uid || req.body.uid;
+      const email = req.user?.email || req.body.email;
+      const displayName = req.user?.name || req.body.displayName;
+
+      if (!uid || !email) {
+        return res.status(400).json({ error: 'UID and Email are required' });
+      }
+
+      const user = await getOrCreateUser(uid, email, displayName);
+      await logAuditEvent({
+        userUid: uid,
+        action: 'USER_SYNC',
+        entity: 'users',
+        details: `User ${email} authenticated and synced to PostgreSQL`,
+      });
+      res.json({ success: true, user });
+    } catch (error: any) {
+      console.error('Error syncing user to Cloud SQL:', error);
+      res.status(500).json({ error: 'Failed to sync user' });
+    }
+  });
+
+  // Inter-district supply transfers (PostgreSQL)
+  app.get('/api/transfers', async (req, res) => {
+    try {
+      const transfers = await getAllTransfers();
+      res.json({ success: true, data: transfers });
+    } catch (error: any) {
+      console.error('Error fetching transfers from Cloud SQL:', error);
+      res.status(500).json({ error: 'Failed to fetch transfers' });
+    }
+  });
+
+  app.post('/api/transfers', optionalAuth, async (req: AuthRequest, res) => {
+    try {
+      const data = req.body;
+      const createdByUid = req.user?.uid || data.createdByUid;
+      const transfer = await insertTransfer({
+        ...data,
+        createdByUid,
+      });
+
+      await logAuditEvent({
+        userUid: createdByUid,
+        action: 'CREATE_TRANSFER',
+        entity: 'redistribution_transfers',
+        details: `Dispatched ${data.quantity} ${data.unit} of ${data.itemType} from ${data.sourceDistrictName} to ${data.targetDistrictName}`,
+      });
+
+      res.json({ success: true, data: transfer });
+    } catch (error: any) {
+      console.error('Error saving transfer to Cloud SQL:', error);
+      res.status(500).json({ error: 'Failed to save transfer' });
+    }
+  });
+
+  app.patch('/api/transfers/:id/status', optionalAuth, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const { transitStatus } = req.body;
+      if (!transitStatus) {
+        return res.status(400).json({ error: 'transitStatus is required' });
+      }
+
+      const updated = await updateTransferStatus(id, transitStatus);
+      await logAuditEvent({
+        userUid: req.user?.uid,
+        action: 'UPDATE_TRANSFER_STATUS',
+        entity: 'redistribution_transfers',
+        details: `Transfer ${id} status updated to ${transitStatus}`,
+      });
+
+      res.json({ success: true, data: updated });
+    } catch (error: any) {
+      console.error('Error updating transfer status in Cloud SQL:', error);
+      res.status(500).json({ error: 'Failed to update transfer status' });
+    }
+  });
+
+  // Facility Telemetry (PostgreSQL)
+  app.get('/api/facility-telemetry', async (req, res) => {
+    try {
+      const telemetry = await getFacilityTelemetry();
+      res.json({ success: true, data: telemetry });
+    } catch (error: any) {
+      console.error('Error fetching facility telemetry:', error);
+      res.status(500).json({ error: 'Failed to fetch facility telemetry' });
+    }
+  });
+
+  app.post('/api/facility-telemetry', optionalAuth, async (req: AuthRequest, res) => {
+    try {
+      const data = req.body;
+      const updatedByUid = req.user?.uid || data.updatedByUid;
+      const telemetry = await upsertFacilityTelemetry({
+        ...data,
+        updatedByUid,
+      });
+
+      await logAuditEvent({
+        userUid: updatedByUid,
+        action: 'UPDATE_FACILITY_TELEMETRY',
+        entity: 'facility_telemetry',
+        details: `Updated facility telemetry for ${data.facilityId}`,
+      });
+
+      res.json({ success: true, data: telemetry });
+    } catch (error: any) {
+      console.error('Error updating facility telemetry:', error);
+      res.status(500).json({ error: 'Failed to update facility telemetry' });
+    }
+  });
+
+  // Outbreak emergency protocols (PostgreSQL)
+  app.get('/api/outbreak-protocols', async (req, res) => {
+    try {
+      const protocols = await getOutbreakProtocols();
+      res.json({ success: true, data: protocols });
+    } catch (error: any) {
+      console.error('Error fetching outbreak protocols:', error);
+      res.status(500).json({ error: 'Failed to fetch outbreak protocols' });
+    }
+  });
+
+  app.post('/api/outbreak-protocols', optionalAuth, async (req: AuthRequest, res) => {
+    try {
+      const data = req.body;
+      const updatedByUid = req.user?.uid || data.updatedByUid;
+      const protocol = await upsertOutbreakProtocol({
+        ...data,
+        updatedByUid,
+      });
+
+      await logAuditEvent({
+        userUid: updatedByUid,
+        action: 'UPDATE_OUTBREAK_PROTOCOL',
+        entity: 'outbreak_protocols',
+        details: `Updated outbreak protocol for ${data.diseaseName} (${data.id}) to ${data.emergencyActionStatus}`,
+      });
+
+      res.json({ success: true, data: protocol });
+    } catch (error: any) {
+      console.error('Error updating outbreak protocol:', error);
+      res.status(500).json({ error: 'Failed to update outbreak protocol' });
+    }
   });
 
   // AI Demand Forecast Endpoint (Fast 2-3s response with top 4-5 prioritized medicines)

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StateData, District, RedistributionTransfer } from '../types';
 import {
   Truck,
@@ -14,7 +14,13 @@ import {
   Navigation,
   Warehouse,
   Boxes,
+  Database,
 } from 'lucide-react';
+import {
+  saveTransferToFirestore,
+  updateTransferStatusInFirestore,
+  subscribeToTransfers,
+} from '../services/firebaseSyncService';
 
 interface RedistributionViewProps {
   states: StateData[];
@@ -56,6 +62,26 @@ export const RedistributionView: React.FC<RedistributionViewProps> = ({
   // Active Transfers List
   const [transfers, setTransfers] = useState<RedistributionTransfer[]>(initialTransfers);
   const [dispatchSuccess, setDispatchSuccess] = useState(false);
+  const [isSyncingWithDb, setIsSyncingWithDb] = useState(false);
+
+  // Subscribe to real-time Firestore transfers
+  useEffect(() => {
+    const unsubscribe = subscribeToTransfers((dbTransfers) => {
+      if (dbTransfers && dbTransfers.length > 0) {
+        // Merge with initial transfers avoiding duplicates
+        setTransfers((prev) => {
+          const map = new Map<string, RedistributionTransfer>();
+          initialTransfers.forEach((t) => map.set(t.id, t));
+          dbTransfers.forEach((t) => map.set(t.id, t));
+          return Array.from(map.values());
+        });
+      }
+    });
+
+    return () => {
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
+  }, [initialTransfers]);
 
   const handleStateChange = (stateId: string) => {
     setSelectedStateId(stateId);
@@ -94,7 +120,7 @@ export const RedistributionView: React.FC<RedistributionViewProps> = ({
     }
   };
 
-  const handleDispatchTransfer = () => {
+  const handleDispatchTransfer = async () => {
     const source = currentState.districts.find((d) => d.id === sourceDistrictId);
     const target = currentState.districts.find((d) => d.id === targetDistrictId);
 
@@ -119,9 +145,33 @@ export const RedistributionView: React.FC<RedistributionViewProps> = ({
       temperatureControlled: true,
     };
 
-    setTransfers([newTransfer, ...transfers]);
+    setTransfers((prev) => [newTransfer, ...prev.filter((t) => t.id !== newTransfer.id)]);
     setDispatchSuccess(true);
     setTimeout(() => setDispatchSuccess(false), 4000);
+
+    // Persist to Firebase Firestore
+    try {
+      setIsSyncingWithDb(true);
+      await saveTransferToFirestore(newTransfer);
+    } catch (e) {
+      console.warn('Saved locally, Firestore sync pending:', e);
+    } finally {
+      setIsSyncingWithDb(false);
+    }
+  };
+
+  const handleUpdateStatus = async (
+    transferId: string,
+    status: RedistributionTransfer['transitStatus']
+  ) => {
+    setTransfers((prev) =>
+      prev.map((t) => (t.id === transferId ? { ...t, transitStatus: status } : t))
+    );
+    try {
+      await updateTransferStatusInFirestore(transferId, status);
+    } catch (e) {
+      console.warn('Status updated locally, Firestore sync pending:', e);
+    }
   };
 
   return (
@@ -464,15 +514,26 @@ export const RedistributionView: React.FC<RedistributionViewProps> = ({
                     <span className="font-mono font-bold text-slate-900 text-xs">{tr.etaHours}h</span>
                   </div>
                 </div>
-                <span
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
-                    tr.transitStatus === 'IN_TRANSIT'
-                      ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 animate-pulse'
-                      : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                  }`}
-                >
-                  {tr.transitStatus.replace('_', ' ')}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <select
+                    value={tr.transitStatus}
+                    onChange={(e) =>
+                      handleUpdateStatus(tr.id, e.target.value as RedistributionTransfer['transitStatus'])
+                    }
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border cursor-pointer focus:outline-none ${
+                      tr.transitStatus === 'IN_TRANSIT'
+                        ? 'bg-indigo-50 text-indigo-700 border-indigo-300'
+                        : tr.transitStatus === 'DELIVERED'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                        : 'bg-amber-50 text-amber-700 border-amber-300'
+                    }`}
+                  >
+                    <option value="PENDING">PENDING</option>
+                    <option value="DISPATCHED">DISPATCHED</option>
+                    <option value="IN_TRANSIT">IN TRANSIT</option>
+                    <option value="DELIVERED">DELIVERED</option>
+                  </select>
+                </div>
               </div>
             </div>
           ))}

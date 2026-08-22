@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { HEALTH_DATA_STORE, INITIAL_REDISTRIBUTIONS, INITIAL_OUTBREAK_ALERTS } from './data/healthData';
 import { NavigationHeader } from './components/NavigationHeader';
 import { OverviewHome } from './components/OverviewHome';
@@ -13,10 +13,24 @@ import { RedistributionView } from './components/RedistributionView';
 import { OutbreakCoordinationView } from './components/OutbreakCoordinationView';
 import { BricsCrossBorderView } from './components/BricsCrossBorderView';
 import { DelegateBriefingModal } from './components/DelegateBriefingModal';
+import { AuthModal } from './components/AuthModal';
+import {
+  auth,
+  onAuthStateChanged,
+  signOutUser,
+  testFirestoreConnection,
+} from './firebase';
+import { syncUserProfile } from './services/firebaseSyncService';
+import { User } from 'firebase/auth';
 
 export default function App() {
   const [selectedCountryId, setSelectedCountryId] = useState<string>('india');
   const [activeView, setActiveView] = useState<'home' | 'medicines' | 'brics' | 'beds' | 'redistribution' | 'outbreak'>('home');
+
+  // Firebase Auth & Firestore State
+  const [currentUser, setCurrentUser] = useState<User | { uid: string; displayName?: string | null; email?: string | null } | null>(null);
+  const [isFirestoreReady, setIsFirestoreReady] = useState<boolean>(true);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
 
   // Navigation targets from Search or State Cards
   const [targetStateId, setTargetStateId] = useState<string | undefined>(undefined);
@@ -34,6 +48,50 @@ export default function App() {
 
   // Delegate Briefing Modal
   const [isBriefingOpen, setIsBriefingOpen] = useState<boolean>(false);
+
+  // Test Firestore and Listen to Auth State
+  useEffect(() => {
+    testFirestoreConnection().catch((err) => {
+      console.warn('Firestore initial check:', err);
+    });
+
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCurrentUser(user);
+        syncUserProfile(user).catch(console.warn);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleOpenSignIn = () => {
+    setIsAuthModalOpen(true);
+  };
+
+  const handleAuthSuccess = async (officer: { uid: string; displayName: string; email: string }) => {
+    setCurrentUser(officer as any);
+    setSyncToastMessage(`✓ Logged in as ${officer.displayName} (${officer.email})`);
+    setTimeout(() => setSyncToastMessage(null), 4000);
+
+    try {
+      await syncUserProfile(officer as any);
+    } catch (e) {
+      console.warn('Profile sync warning:', e);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOutUser();
+      setCurrentUser(null);
+      setSyncToastMessage('✓ Signed out successfully');
+      setTimeout(() => setSyncToastMessage(null), 3000);
+    } catch (e: any) {
+      console.warn('Sign-out error:', e);
+      setCurrentUser(null);
+    }
+  };
 
   const currentCountry =
     HEALTH_DATA_STORE.find((c) => c.id === selectedCountryId) || HEALTH_DATA_STORE[0];
@@ -94,6 +152,10 @@ export default function App() {
         isFederatedSyncing={isFederatedSyncing}
         onTriggerFederatedSync={handleTriggerFederatedSync}
         federatedEpoch={federatedEpoch}
+        currentUser={currentUser}
+        onSignIn={handleOpenSignIn}
+        onSignOut={handleSignOut}
+        firestoreConnected={isFirestoreReady}
       />
 
       {/* Floating Sync Notification Toast */}
@@ -160,6 +222,13 @@ export default function App() {
           <span className="font-mono text-[11px] text-slate-400">Primary Health Centre (PHC) & CHC Observability</span>
         </div>
       </footer>
+
+      {/* Health Officer Authentication Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={handleAuthSuccess}
+      />
 
       {/* 5-Min Executive Briefing Modal */}
       <DelegateBriefingModal

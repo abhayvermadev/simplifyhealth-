@@ -1,0 +1,226 @@
+{
+  "entities": {
+    "RedistributionTransfer": {
+      "title": "RedistributionTransfer",
+      "description": "Inter-district medical supply and pharmaceutical transfer record",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique transfer identifier"
+        },
+        "sourceDistrictId": {
+          "type": "string",
+          "description": "Source district identifier"
+        },
+        "sourceDistrictName": {
+          "type": "string",
+          "description": "Name of source district"
+        },
+        "targetDistrictId": {
+          "type": "string",
+          "description": "Destination district identifier"
+        },
+        "targetDistrictName": {
+          "type": "string",
+          "description": "Name of destination district"
+        },
+        "itemType": {
+          "type": "string",
+          "description": "Medicine or resource name"
+        },
+        "quantity": {
+          "type": "number",
+          "description": "Total units to transfer"
+        },
+        "unit": {
+          "type": "string",
+          "description": "Unit of measurement (vials, strips, cylinders)"
+        },
+        "urgency": {
+          "type": "string",
+          "enum": ["HIGH", "EMERGENCY", "STANDARD"],
+          "description": "Urgency classification"
+        },
+        "transitStatus": {
+          "type": "string",
+          "enum": ["PENDING", "DISPATCHED", "IN_TRANSIT", "DELIVERED"],
+          "description": "Current logistics delivery status"
+        },
+        "vehicleType": {
+          "type": "string",
+          "description": "Cold-chain or standard transport vehicle"
+        },
+        "distanceKm": {
+          "type": "number",
+          "description": "Travel distance in kilometers"
+        },
+        "etaHours": {
+          "type": "number",
+          "description": "Estimated transit duration in hours"
+        },
+        "rationale": {
+          "type": "string",
+          "description": "Clinical or stockout justification"
+        },
+        "dispatchedAt": {
+          "type": "string",
+          "description": "ISO timestamp of transfer creation"
+        },
+        "temperatureControlled": {
+          "type": "boolean",
+          "description": "Whether refrigerated transit is enforced"
+        },
+        "createdBy": {
+          "type": "string",
+          "description": "User UID who authorized the transfer"
+        }
+      },
+      "required": [
+        "id",
+        "sourceDistrictId",
+        "sourceDistrictName",
+        "targetDistrictId",
+        "targetDistrictName",
+        "itemType",
+        "quantity",
+        "unit",
+        "urgency",
+        "transitStatus",
+        "dispatchedAt"
+      ]
+    },
+    "FacilityTelemetryOverride": {
+      "title": "FacilityTelemetryOverride",
+      "description": "Real-time state overrides for PHC/CHC bed, oxygen, and medicine stock",
+      "type": "object",
+      "properties": {
+        "facilityId": {
+          "type": "string",
+          "description": "Primary or Community Health Centre identifier"
+        },
+        "updatedBy": {
+          "type": "string",
+          "description": "User UID who submitted telemetry adjustment"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of adjustment"
+        },
+        "medicineStocks": {
+          "type": "string",
+          "description": "JSON serialized live medicine inventory dictionary"
+        },
+        "occupiedBeds": {
+          "type": "number",
+          "description": "Current live occupied bed count"
+        },
+        "oxygenHoursRemaining": {
+          "type": "number",
+          "description": "Live oxygen reserve hours"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Clinical notes or shift change log"
+        }
+      },
+      "required": ["facilityId", "updatedAt"]
+    },
+    "OutbreakProtocol": {
+      "title": "OutbreakProtocol",
+      "description": "Active epidemic response actions and IDSP containment status",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique outbreak record ID"
+        },
+        "outbreakId": {
+          "type": "string",
+          "description": "Reference to the outbreak scenario identifier"
+        },
+        "diseaseName": {
+          "type": "string",
+          "description": "Name of surveillance vector / disease"
+        },
+        "emergencyActionStatus": {
+          "type": "string",
+          "enum": ["ACTIVE_RESPONSE", "CONTAINMENT_PHASE", "ASSESSMENT_TRIGGERED"],
+          "description": "Field action phase"
+        },
+        "containmentProtocolsDeployed": {
+          "type": "string",
+          "description": "JSON serialized list of deployed containment actions"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of update"
+        },
+        "updatedBy": {
+          "type": "string",
+          "description": "User UID of epidemiology officer"
+        }
+      },
+      "required": ["id", "outbreakId", "diseaseName", "emergencyActionStatus", "updatedAt"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Health Ministry Official or Clinical Officer Profile",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID"
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User full name"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["STATE_NODAL_OFFICER", "DISTRICT_CHIEF_MEDICAL_OFFICER", "PHC_MEDICAL_OFFICER", "EPIDEMIOLOGY_DIRECTOR"],
+          "description": "Designated health network authority role"
+        },
+        "designatedState": {
+          "type": "string",
+          "description": "Assigned state jurisdiction"
+        },
+        "lastActive": {
+          "type": "string",
+          "description": "ISO timestamp of last activity"
+        }
+      },
+      "required": ["uid", "email", "role"]
+    }
+  },
+  "firestore": {
+    "/transfers/{transferId}": {
+      "schema": {
+        "$ref": "#/entities/RedistributionTransfer"
+      },
+      "description": "Collection of cross-district and inter-facility supply redistribution transfers"
+    },
+    "/facilityOverrides/{facilityId}": {
+      "schema": {
+        "$ref": "#/entities/FacilityTelemetryOverride"
+      },
+      "description": "Collection of real-time inventory and bed triage overrides for health centers"
+    },
+    "/outbreakProtocols/{protocolId}": {
+      "schema": {
+        "$ref": "#/entities/OutbreakProtocol"
+      },
+      "description": "Collection of active IDSP outbreak containment and epidemic response status records"
+    },
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Collection of authorized health officers and dashboard administrators"
+    }
+  }
+}

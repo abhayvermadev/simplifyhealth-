@@ -12,7 +12,12 @@ import {
   Sparkles,
   Globe,
   ShieldCheck,
+  Database,
+  LogIn,
+  LogOut,
+  User as UserIcon,
 } from 'lucide-react';
+import { User } from 'firebase/auth';
 
 interface NavigationHeaderProps {
   currentCountry: CountryData;
@@ -23,6 +28,10 @@ interface NavigationHeaderProps {
   isFederatedSyncing: boolean;
   onTriggerFederatedSync: () => void;
   federatedEpoch: number;
+  currentUser?: User | { uid: string; displayName?: string | null; email?: string | null } | null;
+  onSignIn?: () => void;
+  onSignOut?: () => void;
+  firestoreConnected?: boolean;
 }
 
 export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
@@ -32,6 +41,10 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
   isFederatedSyncing,
   onTriggerFederatedSync,
   federatedEpoch,
+  currentUser,
+  onSignIn,
+  onSignOut,
+  firestoreConnected = true,
 }) => {
   const navItems = [
     { id: 'home', label: 'National Overview', icon: LayoutDashboard, badge: 'Overview' },
@@ -84,12 +97,22 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
           </div>
 
           {/* Right Controls */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Live Sync Status */}
+            <div
+              className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 font-semibold"
+              title="National Health Grid Live Sync Active"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Live Sync Active</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+            </div>
+
             {/* National Badge */}
-            <div className="flex items-center gap-2 bg-slate-100 px-3.5 py-1.5 rounded-xl border border-slate-200 text-xs shadow-xs">
+            <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 text-xs shadow-xs">
               <span className="text-lg leading-none">🇮🇳</span>
-              <span className="font-bold text-slate-800 hidden sm:inline">India National Grid</span>
-              <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+              <span className="font-bold text-slate-800 hidden sm:inline">India Grid</span>
+              <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
             </div>
 
             {/* Federated Learning Epoch Button */}
@@ -97,13 +120,40 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
               id="btn-federated-sync"
               onClick={onTriggerFederatedSync}
               disabled={isFederatedSyncing}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-300 text-xs text-indigo-800 font-bold transition-all cursor-pointer shadow-xs"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-300 text-xs text-indigo-800 font-bold transition-all cursor-pointer shadow-xs"
               title="Privacy-Preserving Federated Model Sync"
             >
               <Cpu className={`w-4 h-4 ${isFederatedSyncing ? 'animate-spin text-indigo-600' : 'text-indigo-600'}`} />
-              <span className="hidden md:inline font-mono">Sync Epoch #{federatedEpoch}</span>
-              <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span className="hidden xl:inline font-mono">Epoch #{federatedEpoch}</span>
             </button>
+
+            {/* Firebase Auth Button */}
+            {currentUser ? (
+              <div className="flex items-center gap-1.5 pl-1 border-l border-slate-200">
+                <div className="hidden sm:flex flex-col text-right">
+                  <span className="text-xs font-bold text-slate-800 truncate max-w-[120px]">
+                    {currentUser.displayName || currentUser.email?.split('@')[0] || 'Health Officer'}
+                  </span>
+                  <span className="text-[10px] text-indigo-600 font-medium">Nodal Officer</span>
+                </div>
+                <button
+                  onClick={onSignOut}
+                  className="p-2 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-600 border border-slate-200 transition-colors cursor-pointer"
+                  title="Sign Out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={onSignIn}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors shadow-xs cursor-pointer"
+                title="Sign In with Google / Firebase Auth"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
